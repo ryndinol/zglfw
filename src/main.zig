@@ -390,7 +390,6 @@ pub const InitHint = enum(c_int) {
 
 pub const GLproc = fn () callconv(.C) void;
 pub const VKproc = ?fn () callconv(.C) void;
-pub const VkInstance = enum(usize) { null_handle = 0, _ };
 
 pub const Monitor = c_long;
 pub const Window = c_long;
@@ -1198,24 +1197,41 @@ pub fn getProcAddress(procname: [*:0]const u8) GLproc {
 }
 
 //Vulkan stuff
-extern fn glfwGetInstanceProcAddress(instance: usize, procname: [*:0]const u8) VKproc;
-pub fn getInstanceProcAddress(instance: usize, procname: [*:0]const u8) VKproc {
-    var res = glfwGetInstanceProcAddress(instance, procname);
-    errorCheck2();
-    return res;
-}
-//extern fn int glfwGetPhysicalDevicePresentationSupport(VkInstance instance, VkPhysicalDevice device, uint32_t queuefamily);
-//extern fn VkResult glfwCreateWindowSurface(VkInstance instance, GLFWwindow* window, const VkAllocationCallbacks* allocator, VkSurfaceKHR* surface);
-extern fn glfwVulkanSupported() c_int;
-pub fn vulkanSupported() bool {
-    var res = glfwVulkanSupported();
-    errorCheck2();
-    return res != 0;
-}
+// Pass vulkan library here to make use of types, etc.
+pub fn Vk(comptime vk: anytype) type {
+    return struct {
+        const Self = @This();
 
-extern fn glfwGetRequiredInstanceExtensions(count: *u32) ?[*][*:0]const u8;
-pub fn getRequiredInstanceExtensions(count: *u32) ?[*][*:0]const u8 {
-    var res = glfwGetRequiredInstanceExtensions(count);
-    errorCheck2();
-    return res;
+        pub fn init() Self {
+            return Self{};
+        }
+
+        extern fn glfwGetInstanceProcAddress(instance: vk.Instance, procname: [*:0]const u8) VKproc;
+        pub fn getInstanceProcAddress(instance: vk.Instance, procname: [*:0]const u8) VKproc {
+            var res = glfwGetInstanceProcAddress(instance, procname);
+            errorCheck2();
+            return res;
+        }
+        //extern fn int glfwGetPhysicalDevicePresentationSupport(VkInstance instance, VkPhysicalDevice device, uint32_t queuefamily);
+        extern fn glfwCreateWindowSurface(instance: vk.Instance, window: *Window, allocator: ?*const vk.AllocationCallbacks, surface: *vk.SurfaceKHR) vk.Result;
+        pub fn createWindowSurface(instance: vk.Instance, window: *Window, allocator: ?*const vk.AllocationCallbacks, surface: *vk.SurfaceKHR) vk.Result {
+            var res = glfwCreateWindowSurface(instance, window, allocator, surface);
+            errorCheck2();
+            return res;
+        }
+
+        extern fn glfwVulkanSupported() c_int;
+        pub fn vulkanSupported() bool {
+            var res = glfwVulkanSupported();
+            errorCheck2();
+            return res != 0;
+        }
+
+        extern fn glfwGetRequiredInstanceExtensions(count: *u32) ?[*][*:0]const u8;
+        pub fn getRequiredInstanceExtensions(count: *u32) ?[*][*:0]const u8 {
+            var res = glfwGetRequiredInstanceExtensions(count);
+            errorCheck2();
+            return res;
+        }
+    };
 }
