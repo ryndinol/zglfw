@@ -475,7 +475,7 @@ fn errorCheck() !void {
 fn errorCheck2() void {
     errorCheck() catch |err| {
         if (err != GLFWError.NoError) {
-            std.debug.warn("error: {s}\n", .{@errorName(err)});
+            std.debug.print("error: {s}\n", .{@errorName(err)});
         }
     };
 }
@@ -606,7 +606,8 @@ pub fn defaultWindowHints() void {
 extern fn glfwWindowHint(hint: c_int, value: c_int) void;
 //pub fn windowHint(hint: WindowHint, value: c_int) void{
 pub fn windowHint(hint: WindowHint, value: anytype) void {
-    glfwWindowHint(@enumToInt(hint), @enumToInt(value));
+    // glfwWindowHint(@enumToInt(hint), @enumToInt(value));
+    glfwWindowHint(@enumToInt(hint), value);
     errorCheck2();
 }
 
